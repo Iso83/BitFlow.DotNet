@@ -2,24 +2,21 @@
 @rendermode InteractiveServer
 
 @using System.Net.Http.Json
+@using System.Text.Json
 
 <h1>BitFlow Rewrite</h1>
 
 <div class="mb-3">
-
 	<input class="form-control"
 		   @bind="Expression"
 		   placeholder="Expression" />
-
 </div>
 
 <div class="mb-4">
-
 	<button class="btn btn-primary"
 			@onclick="RunRewrite">
 		Rewrite
 	</button>
-
 </div>
 
 @if (!string.IsNullOrWhiteSpace(Error))
@@ -32,20 +29,14 @@
 @if (Result != null)
 {
 	<div class="card mb-3">
-		<div class="card-header">
-			Parsed
-		</div>
-
+		<div class="card-header">Parsed</div>
 		<div class="card-body">
 			<code>@Result.parsed</code>
 		</div>
 	</div>
 
 	<div class="card mb-4">
-		<div class="card-header">
-			Rewritten
-		</div>
-
+		<div class="card-header">Rewritten</div>
 		<div class="card-body" style="background-color:#314527;font-weight:bold;">
 			<code>@Result.rewritten</code>
 		</div>
@@ -56,29 +47,19 @@
 	@foreach (var step in Result.trace)
 	{
 		<div class="card mb-3">
-
 			<div class="card-header">
 				@step.rule
 			</div>
 
 			<div class="card-body">
-
-				<div>
-					<b>Before</b>
-				</div>
-
+				<div><b>Before</b></div>
 				<code>@step.before</code>
 
 				<hr />
 
-				<div>
-					<b>After</b>
-				</div>
-
+				<div><b>After</b></div>
 				<code>@step.after</code>
-
 			</div>
-
 		</div>
 	}
 }
@@ -90,24 +71,67 @@
 	private RewriteResponse? Result;
 	private string? Error;
 
+#if DEBUG
 	[Inject]
 	private HttpClient Http { get; set; } = default!;
+#endif
 
+#if DEBUG
 	private async Task RunRewrite()
 	{
 		Error = null;
 		Result = null;
 
-		var response = await Http.GetAsync($"/api/rewrite?expr={Uri.EscapeDataString(Expression)}");
-
-		if (!response.IsSuccessStatusCode)
+		try
 		{
-			Error = await response.Content.ReadAsStringAsync();
-			return;
+			var response = await Http.GetAsync(
+				$"/api/rewrite?expr={Uri.EscapeDataString(Expression)}"
+			);
+
+			if (!response.IsSuccessStatusCode)
+			{
+				Error = await response.Content.ReadAsStringAsync();
+				return;
+			}
+
+			Result = await response.Content.ReadFromJsonAsync<RewriteResponse>();
+		}
+		catch (Exception ex)
+		{
+			Error = ex.Message;
+		}
+	}
+#else
+	private Task RunRewrite()
+	{
+		Error = null;
+		Result = null;
+
+		try
+		{
+			using var ctx = new Native.BitFlowContext();
+
+			var parsedId = ctx.Parse(Expression);
+			var rewrittenId = ctx.Rewrite(parsedId);
+
+			var traceJson = ctx.GetTraceJson();
+
+			Result = new RewriteResponse
+			{
+				input = Expression,
+				parsed = ctx.ToText(parsedId),
+				rewritten = ctx.ToText(rewrittenId),
+				trace = JsonSerializer.Deserialize<List<RewriteStep>>(traceJson) ?? []
+			};
+		}
+		catch (Exception ex)
+		{
+			Error = ex.Message;
 		}
 
-		Result = await response.Content.ReadFromJsonAsync<RewriteResponse>();
+		return Task.CompletedTask;
 	}
+#endif
 
 	public class RewriteResponse
 	{

@@ -7,11 +7,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+#if DEBUG
 builder.Services.AddScoped(_ =>
     new HttpClient
     {
-        BaseAddress = new Uri("http://localhost:5286") // use 8080 for docker
+        BaseAddress = new Uri("http://localhost:5286") // windows
     });
+#endif
 
 var app = builder.Build();
 
