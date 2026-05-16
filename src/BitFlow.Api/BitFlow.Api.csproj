@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="cmake --build ../BitFlow.Native/build --config $(Configuration)&#xD;&#xA;&#xD;&#xA;if exist &quot;$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll&quot; (&#xD;&#xA;    copy /Y &quot;$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll&quot; &quot;$(OutDir)&quot;&#xD;&#xA;)" />
+    <Exec Command="if not exist &quot;../BitFlow.Native/build&quot; (&#xA;    cmake -S ../BitFlow.Native -B ../BitFlow.Native/build&#xA;)&#xD;&#xA;&#xD;&#xA;cmake --build ../BitFlow.Native/build --config $(Configuration)&#xD;&#xA;&#xD;&#xA;if exist &quot;$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll&quot; (&#xD;&#xA;    copy /Y &quot;$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll&quot; &quot;$(OutDir)&quot;&#xD;&#xA;)" />
   </Target>
 
 </Project>

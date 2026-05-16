@@ -99,7 +99,8 @@
         Result = null;
 
         var response = await Http.GetAsync(
-            $"http://localhost:5267/rewrite?expr={Uri.EscapeDataString(Expression)}"
+            //$"http://localhost:5267/rewrite?expr={Uri.EscapeDataString(Expression)}"
+            $"http://host.docker.internal:5267/rewrite?expr={Uri.EscapeDataString(Expression)}"
         );
 
         if (!response.IsSuccessStatusCode)
