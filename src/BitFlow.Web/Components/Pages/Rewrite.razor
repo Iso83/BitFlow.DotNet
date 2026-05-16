@@ -7,124 +7,121 @@
 
 <div class="mb-3">
 
-    <input class="form-control"
-           @bind="Expression"
-           placeholder="Expression" />
+	<input class="form-control"
+		   @bind="Expression"
+		   placeholder="Expression" />
 
 </div>
 
 <div class="mb-4">
 
-    <button class="btn btn-primary"
-            @onclick="RunRewrite">
-        Rewrite
-    </button>
+	<button class="btn btn-primary"
+			@onclick="RunRewrite">
+		Rewrite
+	</button>
 
 </div>
 
 @if (!string.IsNullOrWhiteSpace(Error))
 {
-    <div class="alert alert-danger">
-        @Error
-    </div>
+	<div class="alert alert-danger">
+		@Error
+	</div>
 }
 
 @if (Result != null)
 {
-    <div class="card mb-3">
-        <div class="card-header">
-            Parsed
-        </div>
+	<div class="card mb-3">
+		<div class="card-header">
+			Parsed
+		</div>
 
-        <div class="card-body">
-            <code>@Result.parsed</code>
-        </div>
-    </div>
+		<div class="card-body">
+			<code>@Result.parsed</code>
+		</div>
+	</div>
 
-    <div class="card mb-4">
-        <div class="card-header">
-            Rewritten
-        </div>
+	<div class="card mb-4">
+		<div class="card-header">
+			Rewritten
+		</div>
 
-        <div class="card-body" style="background-color:#314527;font-weight:bold;">
-            <code>@Result.rewritten</code>
-        </div>
-    </div>
+		<div class="card-body" style="background-color:#314527;font-weight:bold;">
+			<code>@Result.rewritten</code>
+		</div>
+	</div>
 
-    <h3>Trace</h3>
+	<h3>Trace</h3>
 
-    @foreach (var step in Result.trace)
-    {
-        <div class="card mb-3">
+	@foreach (var step in Result.trace)
+	{
+		<div class="card mb-3">
 
-            <div class="card-header">
-                @step.rule
-            </div>
+			<div class="card-header">
+				@step.rule
+			</div>
 
-            <div class="card-body">
+			<div class="card-body">
 
-                <div>
-                    <b>Before</b>
-                </div>
+				<div>
+					<b>Before</b>
+				</div>
 
-                <code>@step.before</code>
+				<code>@step.before</code>
 
-                <hr />
+				<hr />
 
-                <div>
-                    <b>After</b>
-                </div>
+				<div>
+					<b>After</b>
+				</div>
 
-                <code>@step.after</code>
+				<code>@step.after</code>
 
-            </div>
+			</div>
 
-        </div>
-    }
+		</div>
+	}
 }
 
 @code {
 
-    private string Expression = "a^b^a";
+	private string Expression = "a^b^a";
 
-    private RewriteResponse? Result;
-    private string? Error;
+	private RewriteResponse? Result;
+	private string? Error;
 
-    [Inject]
-    private HttpClient Http { get; set; } = default!;
+	[Inject]
+	private HttpClient Http { get; set; } = default!;
 
-    private async Task RunRewrite()
-    {
-        Error = null;
-        Result = null;
+	private async Task RunRewrite()
+	{
+		Error = null;
+		Result = null;
 
-        var response = await Http.GetAsync(
-            //$"http://localhost:5267/rewrite?expr={Uri.EscapeDataString(Expression)}"
-            $"http://host.docker.internal:5267/rewrite?expr={Uri.EscapeDataString(Expression)}"
-        );
+		var response = await Http.GetAsync($"/api/rewrite?expr={Uri.EscapeDataString(Expression)}");
 
-        if (!response.IsSuccessStatusCode)
-        {
-            Error = await response.Content.ReadAsStringAsync();
-            return;
-        }
+		if (!response.IsSuccessStatusCode)
+		{
+			Error = await response.Content.ReadAsStringAsync();
+			return;
+		}
 
-        Result = await response.Content.ReadFromJsonAsync<RewriteResponse>();
-    }
+		Result = await response.Content.ReadFromJsonAsync<RewriteResponse>();
+	}
 
-    public class RewriteResponse
-    {
-        public string input { get; set; } = "";
-        public string parsed { get; set; } = "";
-        public string rewritten { get; set; } = "";
+	public class RewriteResponse
+	{
+		public string input { get; set; } = "";
+		public string parsed { get; set; } = "";
+		public string rewritten { get; set; } = "";
 
-        public List<RewriteStep> trace { get; set; } = [];
-    }
+		public List<RewriteStep> trace { get; set; } = [];
+	}
 
-    public class RewriteStep
-    {
-        public string rule { get; set; } = "";
-        public string before { get; set; } = "";
-        public string after { get; set; } = "";
-    }
+	public class RewriteStep
+	{
+		public string rule { get; set; } = "";
+		public string before { get; set; } = "";
+		public string after { get; set; } = "";
+	}
 }

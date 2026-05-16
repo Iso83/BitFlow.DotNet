@@ -1,0 +1,11 @@
+.git
+.vs
+.vscode
+
+**/bin/
+**/obj/
+**/build/
+**/CMakeFiles/
+**/CMakeCache.txt
+**/*.vcxproj
+**/*.sln

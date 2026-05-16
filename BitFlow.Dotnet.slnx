@@ -1,4 +1,8 @@
 <Solution>
-  <Project Path="src/BitFlow.Api/BitFlow.Api.csproj" />
+  <Folder Name="/Solution Items/" />
+  <Folder Name="/Solution Items/Docker/">
+    <File Path="docker-compose.yml" />
+    <File Path="docker/web/Dockerfile" />
+  </Folder>
   <Project Path="src/BitFlow.Web/BitFlow.Web.csproj" />
 </Solution>
