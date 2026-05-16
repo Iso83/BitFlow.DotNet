@@ -56,3 +56,5 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 src/BitFlow.Native/build/
+/.vs/BitFlow.Dotnet.slnx/v18
+/.vs

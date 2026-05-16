@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="cmake --build ../BitFlow.Native/build --config $(Configuration)&#xD;&#xA;&#xD;&#xA;if exist &quot;$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll&quot; (&#xD;&#xA;    copy /Y &quot;$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll&quot; &quot;$(OutDir)&quot;&#xD;&#xA;)" />
+  </Target>
+
+</Project>
