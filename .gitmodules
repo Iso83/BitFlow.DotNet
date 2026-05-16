@@ -1,0 +1,3 @@
+[submodule "extern/BitFlow"]
+	path = extern/BitFlow
+	url = https://github.com/Iso83/BitFlow.git
