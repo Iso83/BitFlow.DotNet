@@ -33,6 +33,11 @@ extern "C" {
         BF_ExprId exprId
     );
 
+    BF_API const char *BF_ToLatex(
+        BF_Context context,
+        BF_ExprId exprId
+    );
+
     BF_API const char *BF_GetTraceJson(
         BF_Context context
     );

@@ -62,12 +62,42 @@ namespace BitFlow.Web.Native
 
             try
             {
-
                 return Marshal.PtrToStringUTF8(ptr) ?? "";
             }
             finally
             {
+                NativeMethods.BF_FreeString(ptr);
+            }
+        }
 
+        static string EscapeJson(string text)
+        {
+            return text
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r")
+                .Replace("\t", "\\t");
+        }
+
+        public string ToLatex(uint exprId)
+        {
+            var ptr = NativeMethods.BF_ToLatex(
+                _handle,
+                exprId
+            );
+
+            if (ptr == IntPtr.Zero)
+                throw new InvalidOperationException(
+                    GetLastError()
+                );
+
+            try
+            {
+                return EscapeJson(Marshal.PtrToStringUTF8(ptr) ?? "");
+            }
+            finally
+            {
                 NativeMethods.BF_FreeString(ptr);
             }
         }
@@ -85,12 +115,10 @@ namespace BitFlow.Web.Native
 
             try
             {
-
                 return Marshal.PtrToStringUTF8(ptr) ?? "[]";
             }
             finally
             {
-
                 NativeMethods.BF_FreeString(ptr);
             }
         }

@@ -7,9 +7,7 @@
 		<BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
 	</PropertyGroup>
 
-	<Target Name="BuildBitFlowNative"
-        AfterTargets="Build"
-        Condition="'$(OS)' == 'Windows_NT'">
+	<Target Name="BuildBitFlowNative" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
 
 		<!--
         Build BitFlow.Native through CMake and copy the
@@ -20,10 +18,7 @@
 
 		<Exec Command="cmake --build ../BitFlow.Native/build --config $(Configuration)" />
 
-		<Copy
-		  SourceFiles="$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll"
-		  DestinationFolder="$(OutDir)"
-		  SkipUnchangedFiles="true" />
+		<Copy SourceFiles="$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
 
 	</Target>
 

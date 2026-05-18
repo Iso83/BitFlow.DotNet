@@ -1,12 +1,11 @@
 #include "bitflow_native.h"
 
 #include <BitFlow/core/expression/ExprPrinter.h>
-#include <BitFlow/core/expression/ExprRef.h>
 #include <BitFlow/core/expression/ExprStore.h>
 
-#include <BitFlow/core/rules/RuleEngine.h>
 #include <BitFlow/core/rules/RulePipeline.h>
 
+#include <BitFlow/io/ExprLatex.h>
 #include <BitFlow/io/ExprParser.h>
 
 #include <cstring>
@@ -20,215 +19,235 @@ using namespace BitFlow::Core::Rules;
 using namespace BitFlow::IO;
 
 struct BF_Context_Internal {
-    ExprStore store;
-    ExprNameMap names;
+	ExprStore store;
+	ExprNameMap names;
 
-    std::vector<std::string> trace;
+	std::vector<std::string> trace;
 
-    std::string lastError;
+	std::string lastError;
 };
 
 static char *CopyString(const std::string &text) {
 
-    auto *result = new char[text.size() + 1];
+	auto *result = new char[text.size() + 1];
 
-    std::memcpy(
-        result,
-        text.c_str(),
-        text.size() + 1
-    );
+	std::memcpy(
+		result,
+		text.c_str(),
+		text.size() + 1
+	);
 
-    return result;
+	return result;
 }
 
 extern "C" {
 
-    BF_Context BF_CreateContext() {
+	BF_Context BF_CreateContext() {
 
-        try {
-            return new BF_Context_Internal();
-        }
-        catch (...) {
-            return nullptr;
-        }
-    }
+		try {
+			return new BF_Context_Internal();
+		}
+		catch (...) {
+			return nullptr;
+		}
+	}
 
-    void BF_DestroyContext(BF_Context context) {
-        delete static_cast<BF_Context_Internal *>(context);
-    }
+	void BF_DestroyContext(BF_Context context) {
+		delete static_cast<BF_Context_Internal *>(context);
+	}
 
-    int BF_Parse(
-        BF_Context context,
-        const char *expression,
-        BF_ExprId *outExprId
-    ) {
+	int BF_Parse(
+		BF_Context context,
+		const char *expression,
+		BF_ExprId *outExprId
+	) {
 
-        if (!context || !expression || !outExprId)
-            return -1;
+		if (!context || !expression || !outExprId)
+			return -1;
 
-        auto *ctx = static_cast<BF_Context_Internal *>(context);
+		auto *ctx = static_cast<BF_Context_Internal *>(context);
 
-        try {
+		try {
 
-            auto result = Parse(
-                &ctx->store,
-                expression
-            );
+			auto result = Parse(
+				&ctx->store,
+				expression
+			);
 
-            ctx->names = result.names;
+			ctx->names = result.names;
 
-            *outExprId = result.root.id.value();
+			*outExprId = result.root.id.value();
 
-            return 0;
-        }
-        catch (const std::exception &ex) {
+			return 0;
+		}
+		catch (const std::exception &ex) {
 
-            ctx->lastError = ex.what();
-            return -1;
-        }
-    }
+			ctx->lastError = ex.what();
+			return -1;
+		}
+	}
 
-    int BF_Rewrite(
-        BF_Context context,
-        BF_ExprId exprId,
-        BF_ExprId *outExprId
-    ) {
+	int BF_Rewrite(
+		BF_Context context,
+		BF_ExprId exprId,
+		BF_ExprId *outExprId
+	) {
 
-        if (!context || !outExprId)
-            return -1;
+		if (!context || !outExprId)
+			return -1;
 
-        auto *ctx = static_cast<BF_Context_Internal *>(context);
+		auto *ctx = static_cast<BF_Context_Internal *>(context);
 
-        try {
+		try {
 
-            ctx->trace.clear();
+			ctx->trace.clear();
 
-            RuleEngine engine;
+			RuleEngine engine(BuildExplore());
+			engine.SetDebugCallback(
+				[&](auto before, auto after, auto key) {
 
-            engine.Merge(BuildNormalize());
-            engine.Merge(BuildSimplifyBitwise());
-            engine.Merge(BuildSimplifyArithmetic());
+					auto beforeText = ToString(
+						&ctx->store,
+						before,
+						ctx->names
+					);
 
-            engine.SetDebugCallback(
-                [&](auto before, auto after, auto key) {
+					auto afterText = ToString(
+						&ctx->store,
+						after,
+						ctx->names
+					);
 
-                    auto beforeText = ToString(
-                        &ctx->store,
-                        before,
-                        ctx->names
-                    );
+					std::ostringstream ss;
 
-                    auto afterText = ToString(
-                        &ctx->store,
-                        after,
-                        ctx->names
-                    );
+					ss << "{";
+					ss << "\"rule\":\"" << key.value << "\",";
+					ss << "\"before\":\"" << beforeText << "\",";
+					ss << "\"after\":\"" << afterText << "\"";
+					ss << "}";
 
-                    std::ostringstream ss;
+					ctx->trace.push_back(ss.str());
+				}
+			);
 
-                    ss << "{";
-                    ss << "\"rule\":\"" << key.value << "\",";
-                    ss << "\"before\":\"" << beforeText << "\",";
-                    ss << "\"after\":\"" << afterText << "\"";
-                    ss << "}";
+			auto rewritten = engine.Rewrite(
+				&ctx->store,
+				Ids::ExprId(exprId));
 
-                    ctx->trace.push_back(ss.str());
-                }
-            );
+			*outExprId = rewritten.value();
 
-            auto rewritten = engine.Rewrite(
-                &ctx->store,
-                Ids::ExprId(exprId));
+			return 0;
+		}
+		catch (const std::exception &ex) {
 
-            *outExprId = rewritten.value();
+			ctx->lastError = ex.what();
+			return -1;
+		}
+	}
 
-            return 0;
-        }
-        catch (const std::exception &ex) {
+	const char *BF_ToString(
+		BF_Context context,
+		BF_ExprId exprId
+	) {
 
-            ctx->lastError = ex.what();
-            return -1;
-        }
-    }
+		if (!context)
+			return nullptr;
 
-    const char *BF_ToString(
-        BF_Context context,
-        BF_ExprId exprId
-    ) {
+		auto *ctx = static_cast<BF_Context_Internal *>(context);
 
-        if (!context)
-            return nullptr;
+		try {
 
-        auto *ctx = static_cast<BF_Context_Internal *>(context);
+			auto text = ToString(
+				&ctx->store,
+				Ids::ExprId(exprId),
+				ctx->names
+			);
 
-        try {
+			return CopyString(text);
+		}
+		catch (const std::exception &ex) {
 
-            auto text = ToString(
-                &ctx->store,
-                Ids::ExprId(exprId),
-                ctx->names
-            );
+			ctx->lastError = ex.what();
+			return nullptr;
+		}
+	}
 
-            return CopyString(text);
-        }
-        catch (const std::exception &ex) {
+	const char *BF_ToLatex(
+		BF_Context context,
+		BF_ExprId exprId
+	) {
 
-            ctx->lastError = ex.what();
-            return nullptr;
-        }
-    }
+		if (!context)
+			return nullptr;
 
-    const char *BF_GetTraceJson(
-        BF_Context context
-    ) {
+		auto *ctx = static_cast<BF_Context_Internal *>(context);
 
-        if (!context)
-            return nullptr;
+		try {
+			auto text = ToLatex(
+				&ctx->store,
+				Ids::ExprId(exprId),
+				ctx->names
+			);
 
-        auto *ctx = static_cast<BF_Context_Internal *>(context);
+			return CopyString(text);
+		}
+		catch (const std::exception &ex) {
 
-        try {
+			ctx->lastError = ex.what();
+			return nullptr;
+		}
+	}
 
-            std::ostringstream ss;
+	const char *BF_GetTraceJson(
+		BF_Context context
+	) {
 
-            ss << "[";
+		if (!context)
+			return nullptr;
 
-            for (size_t i = 0; i < ctx->trace.size(); ++i) {
+		auto *ctx = static_cast<BF_Context_Internal *>(context);
 
-                if (i > 0)
-                    ss << ",";
+		try {
 
-                ss << ctx->trace[i];
-            }
+			std::ostringstream ss;
 
-            ss << "]";
+			ss << "[";
 
-            return CopyString(ss.str());
-        }
-        catch (const std::exception &ex) {
+			for (size_t i = 0; i < ctx->trace.size(); ++i) {
 
-            ctx->lastError = ex.what();
-            return nullptr;
-        }
-    }
+				if (i > 0)
+					ss << ",";
 
-    void BF_FreeString(
-        const char *value
-    ) {
+				ss << ctx->trace[i];
+			}
 
-        delete[] value;
-    }
+			ss << "]";
 
-    const char *BF_GetLastError(
-        BF_Context context
-    ) {
+			return CopyString(ss.str());
+		}
+		catch (const std::exception &ex) {
 
-        if (!context)
-            return nullptr;
+			ctx->lastError = ex.what();
+			return nullptr;
+		}
+	}
 
-        auto *ctx = static_cast<BF_Context_Internal *>(context);
+	void BF_FreeString(
+		const char *value
+	) {
 
-        return ctx->lastError.c_str();
-    }
+		delete[] value;
+	}
 
+	const char *BF_GetLastError(
+		BF_Context context
+	) {
+
+		if (!context)
+			return nullptr;
+
+		auto *ctx = static_cast<BF_Context_Internal *>(context);
+
+		return ctx->lastError.c_str();
+	}
 }

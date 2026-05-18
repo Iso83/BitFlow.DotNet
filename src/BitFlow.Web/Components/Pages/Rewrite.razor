@@ -1,8 +1,10 @@
 ﻿@page "/rewrite"
 @rendermode InteractiveServer
+@inject IJSRuntime JS
 
 @using System.Net.Http.Json
 @using System.Text.Json
+
 
 <h1>BitFlow Rewrite</h1>
 
@@ -28,44 +30,47 @@
 
 @if (Result != null)
 {
-	<div class="card mb-3">
-		<div class="card-header">Parsed</div>
-		<div class="card-body">
-			<code>@Result.parsed</code>
-		</div>
-	</div>
-
-	<div class="card mb-4">
-		<div class="card-header">Rewritten</div>
-		<div class="card-body" style="background-color:#314527;font-weight:bold;">
-			<code>@Result.rewritten</code>
-		</div>
-	</div>
-
-	<h3>Trace</h3>
-
-	@foreach (var step in Result.trace)
-	{
+	<div @ref="latexRoot">
 		<div class="card mb-3">
-			<div class="card-header">
-				@step.rule
-			</div>
-
+			<div class="card-header">Parsed</div>
 			<div class="card-body">
-				<div><b>Before</b></div>
-				<code>@step.before</code>
-
-				<hr />
-
-				<div><b>After</b></div>
-				<code>@step.after</code>
+				@($"$$ {Result.parsed} $$")
 			</div>
 		</div>
-	}
+
+		<div class="card mb-4">
+			<div class="card-header">Rewritten</div>
+			<div class="card-body">
+				@($"$$ {Result.rewritten} $$")
+			</div>
+		</div>
+
+		<h3>Trace</h3>
+
+		@foreach (var step in Result.trace)
+		{
+			<div class="card mb-3">
+				<div class="card-header">
+					@step.rule
+				</div>
+
+				<div class="card-body">
+					<div><b>Before</b></div>
+					<code>@step.before</code>
+
+					<hr />
+
+					<div><b>After</b></div>
+					<code>@step.after</code>
+				</div>
+			</div>
+		}
+	</div>
 }
 
 @code {
 
+	private ElementReference latexRoot;
 	private string Expression = "a^b^a";
 
 	private RewriteResponse? Result;
@@ -132,6 +137,17 @@
 		return Task.CompletedTask;
 	}
 #endif
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (Result != null)
+		{
+			await JS.InvokeVoidAsync(
+				"bitflowRenderLatex",
+				latexRoot
+			);
+		}
+	}
 
 	public class RewriteResponse
 	{

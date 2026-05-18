@@ -28,6 +28,11 @@ namespace BitFlow.Web.Native
             uint exprId);
 
         [DllImport("BitFlow.Native", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr BF_ToLatex(
+            IntPtr context,
+            uint exprId);
+
+        [DllImport("BitFlow.Native", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr BF_GetTraceJson(
             IntPtr context);
 

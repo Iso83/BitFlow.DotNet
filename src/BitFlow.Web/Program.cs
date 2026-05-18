@@ -1,5 +1,5 @@
-using BitFlow.Web.Native;
 using BitFlow.Web.Components;
+using BitFlow.Web.Native;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,22 +40,24 @@ app.MapGet("/api/rewrite", (string expr) =>
         using var ctx = new BitFlowContext();
 
         var parsedId = ctx.Parse(expr);
-        var parsed = ctx.ToText(parsedId);
+        //var parsed = ctx.ToText(parsedId);
+        var parsed = ctx.ToLatex(parsedId);
 
         var rewrittenId = ctx.Rewrite(parsedId);
-        var rewritten = ctx.ToText(rewrittenId);
+        //var rewritten = ctx.ToText(rewrittenId);
+        var rewritten = ctx.ToLatex(rewrittenId);
 
         var traceJson = ctx.GetTraceJson();
 
         return Results.Content(
 $$"""
-{
-    "input": "{{expr}}",
-    "parsed": "{{parsed}}",
-    "rewritten": "{{rewritten}}",
-    "trace": {{traceJson}}
-}
-""",
+        {
+            "input": "{{expr}}",
+            "parsed": "{{parsed}}",
+            "rewritten": "{{rewritten}}",
+            "trace": {{traceJson}}
+        }
+        """,
             "application/json"
         );
     }
