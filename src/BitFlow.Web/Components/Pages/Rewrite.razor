@@ -30,7 +30,7 @@
 
 @if (Result != null)
 {
-	<div @ref="latexRoot">
+	<div @ref="latexRoot" @key="Result?.parsed + Result?.rewritten">
 		<div class="card mb-3">
 			<div class="card-header">Parsed</div>
 			<div class="card-body">
@@ -124,8 +124,8 @@
 			Result = new RewriteResponse
 			{
 				input = Expression,
-				parsed = ctx.ToText(parsedId),
-				rewritten = ctx.ToText(rewrittenId),
+				parsed = ctx.ToLatex(parsedId),
+				rewritten = ctx.ToLatex(rewrittenId),
 				trace = JsonSerializer.Deserialize<List<RewriteStep>>(traceJson) ?? []
 			};
 		}

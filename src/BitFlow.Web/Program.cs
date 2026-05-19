@@ -33,6 +33,16 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+static string EscapeJson(string text)
+{
+    return text
+        .Replace("\\", "\\\\")
+        .Replace("\"", "\\\"")
+        .Replace("\n", "\\n")
+        .Replace("\r", "\\r")
+        .Replace("\t", "\\t");
+}
+
 app.MapGet("/api/rewrite", (string expr) =>
 {
     try
@@ -41,11 +51,11 @@ app.MapGet("/api/rewrite", (string expr) =>
 
         var parsedId = ctx.Parse(expr);
         //var parsed = ctx.ToText(parsedId);
-        var parsed = ctx.ToLatex(parsedId);
+        var parsed = EscapeJson(ctx.ToLatex(parsedId));
 
         var rewrittenId = ctx.Rewrite(parsedId);
         //var rewritten = ctx.ToText(rewrittenId);
-        var rewritten = ctx.ToLatex(rewrittenId);
+        var rewritten = EscapeJson(ctx.ToLatex(rewrittenId));
 
         var traceJson = ctx.GetTraceJson();
 

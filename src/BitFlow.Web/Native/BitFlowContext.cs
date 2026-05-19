@@ -70,16 +70,6 @@ namespace BitFlow.Web.Native
             }
         }
 
-        static string EscapeJson(string text)
-        {
-            return text
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r")
-                .Replace("\t", "\\t");
-        }
-
         public string ToLatex(uint exprId)
         {
             var ptr = NativeMethods.BF_ToLatex(
@@ -94,7 +84,7 @@ namespace BitFlow.Web.Native
 
             try
             {
-                return EscapeJson(Marshal.PtrToStringUTF8(ptr) ?? "");
+                return Marshal.PtrToStringUTF8(ptr) ?? "";
             }
             finally
             {
