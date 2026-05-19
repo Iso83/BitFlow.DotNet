@@ -7,3 +7,5 @@ services:
 
     ports:
       - "7144:8080"
+
+    restart: unless-stopped
