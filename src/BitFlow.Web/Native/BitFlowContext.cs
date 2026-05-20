@@ -16,6 +16,16 @@ namespace BitFlow.Web.Native
                 );
         }
 
+        public static string GetGitHash()
+        {
+            var ptr = NativeMethods.BitFlow_GetGitHash();
+
+            if (ptr == IntPtr.Zero)
+                return "unknown";
+
+            return Marshal.PtrToStringUTF8(ptr) ?? "unknown";
+        }
+
         public uint Parse(string expression)
         {
             var result = NativeMethods.BF_Parse(

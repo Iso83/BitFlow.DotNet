@@ -13,6 +13,8 @@ extern "C" {
     typedef void *BF_Context;
     typedef uint32_t BF_ExprId;
 
+    BF_API const char *BitFlow_GetGitHash();
+
     BF_API BF_Context BF_CreateContext();
     BF_API void BF_DestroyContext(BF_Context context);
 

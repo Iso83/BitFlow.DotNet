@@ -1,4 +1,5 @@
 #include "bitflow_native.h"
+#include "version.h"
 
 #include <BitFlow/core/expression/ExprPrinter.h>
 #include <BitFlow/core/expression/ExprStore.h>
@@ -41,6 +42,10 @@ static char *CopyString(const std::string &text) {
 }
 
 extern "C" {
+
+	const char *BitFlow_GetGitHash() {
+		return BITFLOW_GIT_HASH;
+	}
 
 	BF_Context BF_CreateContext() {
 

@@ -1,8 +1,13 @@
-﻿@inherits LayoutComponentBase
+﻿@using BitFlow.Web.Native
+@inherits LayoutComponentBase
 
 <div class="page">
     <div class="sidebar">
         <NavMenu />
+
+        <div class="sidebar-footer">
+            Native: @NativeVersion
+        </div>
     </div>
 
     <main>
@@ -21,3 +26,9 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+
+    private string NativeVersion = BitFlowContext.GetGitHash();
+
+}

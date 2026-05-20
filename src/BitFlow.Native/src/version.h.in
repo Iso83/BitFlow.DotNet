@@ -1,0 +1,3 @@
+#pragma once
+
+#define BITFLOW_GIT_HASH "@BITFLOW_GIT_HASH@"

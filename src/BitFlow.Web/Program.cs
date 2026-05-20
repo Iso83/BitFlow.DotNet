@@ -80,4 +80,12 @@ $$"""
     }
 });
 
+app.MapGet("/api/version", () =>
+{
+    return new
+    {
+        git = BitFlowContext.GetGitHash()
+    };
+});
+
 app.Run();

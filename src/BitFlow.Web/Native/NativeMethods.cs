@@ -4,6 +4,9 @@ namespace BitFlow.Web.Native
 {
     internal static class NativeMethods
     {
+        [DllImport("BitFlow.Native")]
+        public static extern IntPtr BitFlow_GetGitHash();
+
         [DllImport("BitFlow.Native", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr BF_CreateContext();
 
