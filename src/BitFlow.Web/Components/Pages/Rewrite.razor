@@ -11,7 +11,12 @@
 <div class="mb-3">
 	<input class="form-control"
 		   @bind="Expression"
+		   style="font-family: Consolas, monospace;"
 		   placeholder="Expression" />
+	@if (ErrorPosition >= 0)
+	{
+		<pre class="text-danger mb-0 error-marker">@ErrorMarker</pre>
+	}
 </div>
 
 <div class="mb-4">
@@ -76,6 +81,13 @@
 	private RewriteResponse? Result;
 	private string? Error;
 
+	private int ErrorPosition = -1;
+
+	private string ErrorMarker =>
+		ErrorPosition < 0
+			? ""
+			: new string(' ', ErrorPosition) + "^";
+
 #if DEBUG
 	[Inject]
 	private HttpClient Http { get; set; } = default!;
@@ -85,6 +97,7 @@
 	private async Task RunRewrite()
 	{
 		Error = null;
+		ErrorPosition = -1;
 		Result = null;
 
 		try
@@ -96,6 +109,15 @@
 			if (!response.IsSuccessStatusCode)
 			{
 				Error = await response.Content.ReadAsStringAsync();
+				
+				var match = System.Text.RegularExpressions.Regex.Match(
+					Error,
+					@"position\s+(\d+)"
+				);
+
+				if (match.Success)
+					ErrorPosition = int.Parse(match.Groups[1].Value);
+
 				return;
 			}
 
@@ -104,12 +126,15 @@
 		catch (Exception ex)
 		{
 			Error = ex.Message;
+
+			
 		}
 	}
 #else
 	private Task RunRewrite()
 	{
 		Error = null;
+		ErrorPosition = -1;
 		Result = null;
 
 		try
@@ -132,6 +157,14 @@
 		catch (Exception ex)
 		{
 			Error = ex.Message;
+
+			var match = System.Text.RegularExpressions.Regex.Match(
+				ex.Message,
+				@"position\s+(\d+)"
+			);
+
+			if (match.Success)
+				ErrorPosition = int.Parse(match.Groups[1].Value);
 		}
 
 		return Task.CompletedTask;
