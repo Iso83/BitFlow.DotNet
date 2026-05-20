@@ -4,6 +4,9 @@ RUN apt-get update && apt-get install -y \
     cmake \
     build-essential
 
+ARG BITFLOW_GIT_HASH=unknown
+ENV BITFLOW_GIT_HASH=${BITFLOW_GIT_HASH}
+
 WORKDIR /src
 
 COPY . .

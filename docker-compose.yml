@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: docker/web/Dockerfile
+      args:
+        BITFLOW_GIT_HASH: ${BITFLOW_GIT_HASH:-unknown}
 
     ports:
       - "7144:8080"

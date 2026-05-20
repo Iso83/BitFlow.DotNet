@@ -12,12 +12,21 @@ set(BF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 # Git hash ophalen van BitFlow submodule
 # -------------------------------------------------------
 
-execute_process(
-    COMMAND git rev-parse --short HEAD
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../extern/BitFlow
-    OUTPUT_VARIABLE BITFLOW_GIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+set(BITFLOW_GIT_HASH "$ENV{BITFLOW_GIT_HASH}")
+
+if(NOT BITFLOW_GIT_HASH)
+    execute_process(
+        COMMAND git rev-parse --short HEAD
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../extern/BitFlow
+        OUTPUT_VARIABLE BITFLOW_GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+endif()
+
+if(NOT BITFLOW_GIT_HASH)
+    set(BITFLOW_GIT_HASH "unknown")
+endif()
 
 message(STATUS "BitFlow git hash: ${BITFLOW_GIT_HASH}")
 
