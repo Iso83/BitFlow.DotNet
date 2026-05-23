@@ -8,23 +8,29 @@
 
 <h1>BitFlow Rewrite</h1>
 
-<div class="mb-3">
-	<input class="form-control"
-		   @bind="Expression"
-		   style="font-family: Consolas, monospace;"
-		   placeholder="Expression" />
-	@if (ErrorPosition >= 0)
-	{
-		<pre class="text-danger mb-0 error-marker">@ErrorMarker</pre>
-	}
-</div>
+<form @onsubmit="HandleSubmit" @onsubmit:preventDefault>
 
-<div class="mb-4">
-	<button class="btn btn-primary"
-			@onclick="RunRewrite">
-		Rewrite
-	</button>
-</div>
+	<div class="mb-3">
+		<input class="form-control"
+			   @bind="Expression"
+			   @bind:event="oninput"
+			   style="font-family: Consolas, monospace;"
+			   placeholder="Expression" />
+
+		@if (ErrorPosition >= 0)
+		{
+			<pre class="text-danger mb-0 error-marker">@ErrorMarker</pre>
+		}
+	</div>
+
+	<div class="mb-4">
+		<button class="btn btn-primary"
+				type="submit">
+			Rewrite
+		</button>
+	</div>
+
+</form>
 
 @if (!string.IsNullOrWhiteSpace(Error))
 {
@@ -109,8 +115,8 @@
 			if (!response.IsSuccessStatusCode)
 			{
 				Error = await response.Content.ReadAsStringAsync();
-				
-				var match = System.Text.RegularExpressions.Regex.Match(
+
+var match = System.Text.RegularExpressions.Regex.Match(
 					Error,
 					@"position\s+(\d+)"
 				);
@@ -126,8 +132,6 @@
 		catch (Exception ex)
 		{
 			Error = ex.Message;
-
-			
 		}
 	}
 #else
@@ -196,5 +200,10 @@
 		public string rule { get; set; } = "";
 		public string before { get; set; } = "";
 		public string after { get; set; } = "";
+	}
+
+	private async Task HandleSubmit()
+	{
+		await RunRewrite();
 	}
 }

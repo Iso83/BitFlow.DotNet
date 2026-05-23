@@ -5,21 +5,19 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+		<Configurations>Debug;Release;Fast</Configurations>
+
+		<NativeConfiguration Condition="'$(Configuration)' == 'Fast'">Debug</NativeConfiguration>
+		<NativeConfiguration Condition="'$(Configuration)' != 'Fast'">$(Configuration)</NativeConfiguration>
+		<NativeCleanFirst Condition="'$(Configuration)' == 'Fast'"></NativeCleanFirst>
+		<NativeCleanFirst Condition="'$(Configuration)' != 'Fast'">  --clean-first</NativeCleanFirst>
 	</PropertyGroup>
 
 	<Target Name="BuildBitFlowNative" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
-
-		<!--
-        Build BitFlow.Native through CMake and copy the
-        generated DLL into the .NET output directory.
-		-->
-
-		<Exec Command="if not exist &quot;../BitFlow.Native/build&quot; (&#xA;    cmake -S ../BitFlow.Native -B ../BitFlow.Native/build&#xA;)" />
-
-		<Exec Command="cmake --build ../BitFlow.Native/build --config $(Configuration)" />
-
-		<Copy SourceFiles="$(SolutionDir)src\BitFlow.Native\build\$(Configuration)\BitFlow.Native.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
-
+		<Exec Command="cmake -S ../BitFlow.Native -B ../BitFlow.Native/build" />
+		<Exec Command="cmake --build ../BitFlow.Native/build --config $(NativeConfiguration) $(NativeCleanFirst)" />
+		<Copy SourceFiles="$(SolutionDir)src\BitFlow.Native\build\$(NativeConfiguration)\BitFlow.Native.dll"
+              DestinationFolder="$(OutDir)"
+              SkipUnchangedFiles="true" />
 	</Target>
-
 </Project>

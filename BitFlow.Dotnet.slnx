@@ -1,4 +1,9 @@
 <Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Fast" />
+    <BuildType Name="Release" />
+  </Configurations>
   <Folder Name="/Solution Items/" />
   <Folder Name="/Solution Items/Docker/">
     <File Path="docker-compose.yml" />
