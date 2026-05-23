@@ -52,4 +52,18 @@ extern "C" {
         BF_Context context
     );
 
+    enum BF_PrintFlags {
+        BF_PRINT_NONE = 0,
+        BF_PRINT_EXPLICIT_GROUPS = 1 << 0,
+        BF_PRINT_DEBUG_STRUCTURE = 1 << 1,
+        BF_PRINT_SHOW_EXPR_IDS = 1 << 2,
+        BF_PRINT_SHOW_BITWIDTH = 1 << 3,
+        BF_PRINT_SHOW_OP_TYPES = 1 << 4
+    };
+
+    BF_API const char *BF_ToStringEx(
+        BF_Context context,
+        BF_ExprId exprId,
+        uint32_t flags
+    );
 }

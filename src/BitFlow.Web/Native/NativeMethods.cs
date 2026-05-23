@@ -46,5 +46,11 @@ namespace BitFlow.Web.Native
         [DllImport("BitFlow.Native", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr BF_GetLastError(
             IntPtr context);
+
+        [DllImport("BitFlow.Native", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr BF_ToStringEx(
+            IntPtr context,
+            uint exprId,
+            uint flags);
     }
 }

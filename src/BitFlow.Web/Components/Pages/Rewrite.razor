@@ -22,13 +22,32 @@
 			<pre class="text-danger mb-0 error-marker">@ErrorMarker</pre>
 		}
 	</div>
-
 	<div class="mb-4">
 		<button class="btn btn-primary"
 				type="submit">
 			Rewrite
 		</button>
 	</div>
+
+
+	@if (DebugEnabled)
+	{
+		<div class="card mt-4" border-warning>
+			<div class="card-header d-flex justify-content-between bg-warning-subtle">
+				<span>Debug</span>
+				<button class="btn btn-sm btn-secondary"
+						@onclick="CopyDebug"
+						disabled="@(!CanCopyDebug)">
+					Copy
+				</button>
+			</div>
+			<div class="card-body">
+				<textarea class="form-control" bg-warning-subtle
+						  rows="10"
+						  readonly>@DebugText</textarea>
+			</div>
+		</div>
+	}
 
 </form>
 
@@ -94,47 +113,87 @@
 			? ""
 			: new string(' ', ErrorPosition) + "^";
 
-#if DEBUG
-	[Inject]
-	private HttpClient Http { get; set; } = default!;
-#endif
+	[SupplyParameterFromQuery(Name = "debug")]
+	public string? DebugQuery { get; set; }
 
-#if DEBUG
-	private async Task RunRewrite()
+	private uint DebugFlags;
+	private string DebugText = "";
+	private bool DebugEnabled => DebugFlags != 0;
+
+	protected override void OnParametersSet()
 	{
-		Error = null;
-		ErrorPosition = -1;
-		Result = null;
+		DebugFlags = ParseDebugFlags(DebugQuery);
+	}
 
+	private static uint ParseDebugFlags(string? debug)
+	{
+		if (string.IsNullOrWhiteSpace(debug))
+			return 0;
+
+		uint flags = 0;
+
+		foreach (var part in debug.Split(',',
+					StringSplitOptions.RemoveEmptyEntries |
+					StringSplitOptions.TrimEntries))
+		{
+
+			switch (part.ToLowerInvariant())
+			{
+				case "groups":
+					flags |= (uint)Native.BF_PrintFlags.BF_PRINT_EXPLICIT_GROUPS;
+					break;
+
+				case "ids":
+					flags |= (uint)Native.BF_PrintFlags.BF_PRINT_SHOW_EXPR_IDS;
+					break;
+
+				case "ops":
+					flags |= (uint)Native.BF_PrintFlags.BF_PRINT_SHOW_OP_TYPES;
+					break;
+
+				case "bw":
+					flags |= (uint)Native.BF_PrintFlags.BF_PRINT_SHOW_BITWIDTH;
+					break;
+
+				case "structure":
+					flags |= (uint)Native.BF_PrintFlags.BF_PRINT_DEBUG_STRUCTURE;
+					break;
+			}
+		}
+
+		return flags;
+	}
+
+	private async Task CopyDebug()
+	{
 		try
 		{
-			var response = await Http.GetAsync(
-				$"/api/rewrite?expr={Uri.EscapeDataString(Expression)}"
-			);
+			var text =
+			$"""
+		BitFlow Debug
 
-			if (!response.IsSuccessStatusCode)
-			{
-				Error = await response.Content.ReadAsStringAsync();
+		Mode:
+			{DebugQuery}
 
-var match = System.Text.RegularExpressions.Regex.Match(
-					Error,
-					@"position\s+(\d+)"
-				);
+		Input:
+			{Expression}
 
-				if (match.Success)
-					ErrorPosition = int.Parse(match.Groups[1].Value);
+		Debug:
+			{DebugText}
+		""";
 
-				return;
-			}
-
-			Result = await response.Content.ReadFromJsonAsync<RewriteResponse>();
+			await JS.InvokeVoidAsync(
+				"copyText",
+				text);
 		}
 		catch (Exception ex)
 		{
 			Error = ex.Message;
 		}
 	}
-#else
+
+	private bool CanCopyDebug => Result != null && !string.IsNullOrWhiteSpace(Result.DebugText);
+
 	private Task RunRewrite()
 	{
 		Error = null;
@@ -152,11 +211,16 @@ var match = System.Text.RegularExpressions.Regex.Match(
 
 			Result = new RewriteResponse
 			{
+				DebugText = ctx.ToTextEx(
+					parsedId,
+					DebugFlags),
 				input = Expression,
 				parsed = ctx.ToLatex(parsedId),
 				rewritten = ctx.ToLatex(rewrittenId),
 				trace = JsonSerializer.Deserialize<List<RewriteStep>>(traceJson) ?? []
 			};
+
+			DebugText = Result.DebugText;
 		}
 		catch (Exception ex)
 		{
@@ -173,7 +237,6 @@ var match = System.Text.RegularExpressions.Regex.Match(
 
 		return Task.CompletedTask;
 	}
-#endif
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -188,6 +251,7 @@ var match = System.Text.RegularExpressions.Regex.Match(
 
 	public class RewriteResponse
 	{
+		public string DebugText { get; set; } = "";
 		public string input { get; set; } = "";
 		public string parsed { get; set; } = "";
 		public string rewritten { get; set; } = "";

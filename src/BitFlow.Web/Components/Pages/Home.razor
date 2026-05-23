@@ -5,6 +5,17 @@
 @code {
     protected override void OnInitialized()
     {
-        Nav.NavigateTo("/rewrite");
+        if (OperatingSystem.IsWindows())
+        {
+            Nav.NavigateTo(
+                "/rewrite?debug=groups,ops",
+                replace: true);
+        }
+        else
+        {
+            Nav.NavigateTo(
+                "/rewrite",
+                replace: true);
+        }
     }
 }

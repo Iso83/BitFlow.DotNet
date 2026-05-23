@@ -255,4 +255,50 @@ extern "C" {
 
 		return ctx->lastError.c_str();
 	}
+
+	const char *BF_ToStringEx(
+		BF_Context context,
+		BF_ExprId exprId,
+		uint32_t flags
+	) {
+
+		if (!context)
+			return nullptr;
+
+		auto *ctx = static_cast<BF_Context_Internal *>(context);
+
+		try {
+			PrintOptions options;
+
+			if (flags & BF_PRINT_EXPLICIT_GROUPS)
+				options.ExplicitGroups();
+
+			if (flags & BF_PRINT_DEBUG_STRUCTURE)
+				options.DebugStructure();
+
+			if (flags & BF_PRINT_SHOW_EXPR_IDS)
+				options.ShowExprIds();
+
+			if (flags & BF_PRINT_SHOW_BITWIDTH)
+				options.ShowBitWidth();
+
+			if (flags & BF_PRINT_SHOW_OP_TYPES)
+				options.ShowOpTypes();
+
+
+			auto text = ToString(
+				&ctx->store,
+				Ids::ExprId(exprId),
+				ctx->names,
+				options
+			);
+
+			return CopyString(text);
+		}
+		catch (const std::exception &ex) {
+
+			ctx->lastError = ex.what();
+			return nullptr;
+		}
+	}
 }

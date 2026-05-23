@@ -2,6 +2,16 @@
 
 namespace BitFlow.Web.Native
 {
+    public enum BF_PrintFlags : uint
+    {
+        BF_PRINT_NONE = 0,
+        BF_PRINT_EXPLICIT_GROUPS = 1 << 0,
+        BF_PRINT_DEBUG_STRUCTURE = 1 << 1,
+        BF_PRINT_SHOW_EXPR_IDS = 1 << 2,
+        BF_PRINT_SHOW_BITWIDTH = 1 << 3,
+        BF_PRINT_SHOW_OP_TYPES = 1 << 4
+    };
+
     public sealed class BitFlowContext : IDisposable
     {
         private IntPtr _handle;
@@ -63,6 +73,29 @@ namespace BitFlow.Web.Native
             var ptr = NativeMethods.BF_ToString(
                 _handle,
                 exprId
+            );
+
+            if (ptr == IntPtr.Zero)
+                throw new InvalidOperationException(
+                    GetLastError()
+                );
+
+            try
+            {
+                return Marshal.PtrToStringUTF8(ptr) ?? "";
+            }
+            finally
+            {
+                NativeMethods.BF_FreeString(ptr);
+            }
+        }
+
+        public string ToTextEx(uint exprId, uint flags)
+        {
+            var ptr = NativeMethods.BF_ToStringEx(
+                _handle,
+                exprId,
+                flags
             );
 
             if (ptr == IntPtr.Zero)
