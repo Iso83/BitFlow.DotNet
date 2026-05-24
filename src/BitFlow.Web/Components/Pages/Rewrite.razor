@@ -4,6 +4,7 @@
 
 @using System.Net.Http.Json
 @using System.Text.Json
+@using BitFlow.Web.Native
 
 
 <h1>BitFlow Rewrite</h1>
@@ -168,19 +169,20 @@
 	{
 		try
 		{
-			var text =
-			$"""
-		BitFlow Debug
+			var text = $"""
+				BitFlow Debug
+				Native:
+					{BitFlowContext.GetGitHash()}
 
-		Mode:
-			{DebugQuery}
+				Mode:
+					{DebugQuery}
 
-		Input:
-			{Expression}
+				Input:
+					{Expression}
 
-		Debug:
-			{DebugText}
-		""";
+				Debug:
+					{DebugText}
+				""";
 
 			await JS.InvokeVoidAsync(
 				"copyText",
