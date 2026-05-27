@@ -3,12 +3,9 @@
 
 #include <BitFlow/core/expression/ExprPrinter.h>
 #include <BitFlow/core/expression/ExprStore.h>
-
 #include <BitFlow/core/rules/RulePipeline.h>
-
 #include <BitFlow/io/ExprLatex.h>
 #include <BitFlow/io/ExprParser.h>
-
 #include <cstring>
 #include <sstream>
 #include <string>
@@ -109,29 +106,42 @@ extern "C" {
 
 			RuleEngine engine(BuildExplore());
 			engine.SetDebugCallback(
-				[&](auto before, auto after, auto key) {
+				[&](RuleEngine::DebugCallBack_Ctx &debugCtx) {
 
-					auto beforeText = ToString(
-						&ctx->store,
-						before,
-						ctx->names
-					);
+					auto beforeText = std::make_shared<std::string>();
 
-					auto afterText = ToString(
-						&ctx->store,
-						after,
-						ctx->names
-					);
+					auto *store = debugCtx.store;
+					auto key = debugCtx.key;
 
-					std::ostringstream ss;
+					debugCtx.beginCallback =
+						[&, beforeText, store](Ids::ExprId before) {
 
-					ss << "{";
-					ss << "\"rule\":\"" << key.value << "\",";
-					ss << "\"before\":\"" << beforeText << "\",";
-					ss << "\"after\":\"" << afterText << "\"";
-					ss << "}";
+						*beforeText = ToString(
+							store,
+							before,
+							ctx->names
+						);
+						};
 
-					ctx->trace.push_back(ss.str());
+					debugCtx.endCallback =
+						[&, beforeText, store, key](Ids::ExprId after) {
+
+						auto afterText = ToString(
+							store,
+							after,
+							ctx->names
+						);
+
+						std::ostringstream ss;
+
+						ss << "{";
+						ss << "\"rule\":\"" << key.value << "\",";
+						ss << "\"before\":\"" << *beforeText << "\",";
+						ss << "\"after\":\"" << afterText << "\"";
+						ss << "}";
+
+						ctx->trace.push_back(ss.str());
+						};
 				}
 			);
 
